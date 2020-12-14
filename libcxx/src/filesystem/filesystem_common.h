@@ -86,11 +86,21 @@ static string format_string_imp(const char* msg, ...) {
   // we did not provide a long enough buffer on our first attempt. The
   // return value is the number of bytes (excluding the null byte) that are
   // needed for formatting.
-  size_with_null = static_cast<size_t>(ret) + 1;
-  result.__resize_default_init(size_with_null - 1);
-  ret = ::vsnprintf(&result[0], size_with_null, msg, args);
-  _LIBCPP_ASSERT(static_cast<size_t>(ret) == (size_with_null - 1), "TODO");
 
+  // size_with_null = static_cast<size_t>(ret) + 1;
+  // result.__resize_default_init(size_with_null - 1);
+  // ret = ::vsnprintf(&result[0], size_with_null, msg, args);
+  // _LIBCPP_ASSERT(static_cast<size_t>(ret) == (size_with_null - 1), "TODO");
+
+  size_with_null = static_cast<size_t>(ret) + 1;
+  result.append(size_with_null - 2,
+                [msg, &args](char* p, std::string::size_type n) noexcept {
+                  return static_cast<std::string::size_type>(
+                      // Note this writes over the terminating null.
+                      ::vsnprintf(p, n + 1, msg, args));
+                });
+
+  _LIBCPP_ASSERT(result.size() == (size_with_null - 1), "TODO");
   return result;
 }
 
